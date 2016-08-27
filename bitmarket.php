@@ -22,6 +22,7 @@ License: GPL2
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+
 function bitmarket_update_wallet($user_login, $user ) {
     global $user_ID;
     global $wpdb;
