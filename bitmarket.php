@@ -22,6 +22,33 @@ License: GPL2
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+function bitmarket_rate_updater() {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "http://api.coindesk.com/v1/bpi/currentprice.json");
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $output = curl_exec($ch);
+    curl_close($ch);
+    $output = json_decode($output,true);
+    $usd = $output["bpi"]["USD"]["rate_float"];
+    $eur = $output["bpi"]["EUR"]["rate_float"];
+    add_option("btc_usd", $usd);
+    add_option("btc_eur", $eur);
+}
+
+register_activation_hook(__FILE__, 'my_activation');
+
+function my_activation() {
+    if (! wp_next_scheduled ( 'my_hourly_event' )) {
+        wp_schedule_event(time(), 'hourly', 'my_hourly_event');
+    }
+}
+
+add_action('my_hourly_event', 'do_this_hourly');
+
+function do_this_hourly() {
+        bitmarket_rate_updater();
+}
 
 function bitmarket_update_wallet($user_login, $user ) {
     global $user_ID;
