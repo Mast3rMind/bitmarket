@@ -295,7 +295,6 @@ function bitmarket_settings_section_callback(  ) {
 
 }
 
-
 function bitmarket_options_page(  ) { 
 
 	?>
@@ -308,8 +307,91 @@ function bitmarket_options_page(  ) {
 		do_settings_sections( 'pluginPage' );
 		submit_button();
 		?>
+		
+		<?php $history = get_option( 'bitmarket_transactions' );
+   		echo $history; ?>
 
 	</form>
 	<?php
 
+}
+
+function bitmarket_transactions() {
+include("easybitcoin.php");
+
+$headers  = 'MIME-Version: 1.0' . "\r\n";
+$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
+
+$history = "<table><tr><th>Category</th><th>Account</th><th>Otheraccount</th><th>Address</th><th>Amount</th><th>Fee</th><th>Confirmations</th><th>Txid</th><th>Time</th></tr>";
+
+$options = get_option( 'bitmarket_settings' );
+$bitcoinduser = $options['bitmarket_text_field_0'];
+$bitcoindpassword = $options['bitmarket_text_field_1'];
+$bitcoindip = $options['bitmarket_text_field_2'];
+$bitcoindport = $options['bitmarket_text_field_3'];
+$bitcoin = new Bitcoin($bitcoinduser,$bitcoindpassword,$bitcoindip,$bitcoindport);
+$bitcoin->listtransactions("*",10000,0,false);
+
+$response = $bitcoin->response;
+$details = $response["result"];
+foreach ($details as $detail) {
+        $history .= "<tr>";
+        $history .= "<td>";
+        $history .= $detail["category"];
+        $history .= "</td>";
+        $history .= "<td>";
+        $history .= $detail["account"];
+        $history .= "</td>";
+        $history .= "<td>";
+        $history .= $detail["otheraccount"];
+        $history .= "</td>";
+        $history .= "<td>";
+        $history .= $detail["address"];
+        $history .= "</td>";
+        $history .= "<td>";
+        $history .= $detail["amount"];
+        $history .= "</td>";
+        $history .= "<td>";
+        $history .= $detail["fee"];
+        $history .= "</td>";
+        $history .= "<td>";
+        $history .= $detail["confirmations"];
+        $history .= "</td>";
+        $history .= "<td>";
+        $history .= $detail["txid"];
+        $history .= "</td>";
+        $history .= "<td>";
+        if (!empty($detail["time"])) {
+        $history .= $detail["time"];
+        }
+        if (!empty($detail["walletconflicts"]["time"])) {
+        $history .= $detail["walletconflicts"]["time"];
+        }
+        $history .= "</td>";
+        $history .= "</tr>";
+}
+$history .= "</table>";
+update_option("bitmarket_transactions", $history);
+$admin_email = get_option( 'admin_email' );
+$message = "<h1>Bitcoin transactions</h1>" . $history;
+mail($admin_email, "Bitcoin transactions", $message, $headers);
+}
+
+add_action( 'wp', 'bitmarket_setup_schedule' );
+function bitmarket_setup_schedule() {
+  if ( !wp_next_scheduled( 'bitmarket_hourly_event' ) ) {
+    wp_schedule_event( time(), 'hourly', 'bitmarket_hourly_event');
+  }
+  if ( !wp_next_scheduled( 'bitmarket_daily_event' ) ) {
+    wp_schedule_event( time(), 'daily', 'bitmarket_daily_event');
+  }
+}
+add_action( 'bitmarket_hourly_event', 'bitmarket_do_this_hourly' );
+function bitmarket_do_this_hourly() {
+	 bitmarket_rate_updater();
+}
+
+add_action( 'bitmarket_daily_event', 'bitmarket_do_this_daily' );
+function bitmarket_do_this_daily() {
+         bitmarket_transactions();
 }
