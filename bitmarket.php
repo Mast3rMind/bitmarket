@@ -69,20 +69,6 @@ function bitmarket_rate_updater() {
     add_option("btc_eur", $eur);
 }
 
-register_activation_hook(__FILE__, 'my_activation');
-
-function my_activation() {
-    if (! wp_next_scheduled ( 'my_hourly_event' )) {
-        wp_schedule_event(time(), 'hourly', 'my_hourly_event');
-    }
-}
-
-add_action('my_hourly_event', 'do_this_hourly');
-
-function do_this_hourly() {
-        bitmarket_rate_updater();
-}
-
 function bitmarket_update_wallet($user_login, $user ) {
     global $user_ID;
     global $wpdb;
