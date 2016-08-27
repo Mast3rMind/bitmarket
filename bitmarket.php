@@ -22,6 +22,39 @@ License: GPL2
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+class BTC_Widget extends WP_Widget {
+    public function __construct() {
+        $widget_ops = array(
+            'classname' => 'btc_widget',
+            'description' => 'BTC Widget',
+        );
+        parent::__construct( 'btc_widget', 'BTC Widget', $widget_ops );
+    }
+
+    public function widget( $args, $instance ) {
+        global $user_ID;
+        if(is_user_logged_in()) {
+            $current_user = wp_get_current_user();
+            $bitcoin_balance = get_user_meta($current_user->ID,"btc_available",true);
+            $bitcoin_balance = round($bitcoin_balance, 4);
+            echo '<div id="nav_menu-2" class="widget-wrapper widget_nav_menu"><div class="widget-title">';
+            echo "<h3>Your Bitcoin account</h3></div>";
+            echo '<div><li>BTC balance: ' . $bitcoin_balance . '</li>';
+            echo "<li>BTC address: " . get_user_meta($current_user->ID,"btc_address",true) . "</li>";
+            echo "<li>BTC/EUR: " . get_option("btc_eur") . "</li></ul>";
+            echo '</div></div>';
+        }
+    }
+
+    public function form( $instance ) {
+
+    }
+    
+    public function update( $new_instance, $old_instance ) {
+
+    }
+}
+
 function bitmarket_rate_updater() {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "http://api.coindesk.com/v1/bpi/currentprice.json");
