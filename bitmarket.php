@@ -22,6 +22,33 @@ License: GPL2
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+function bitmarket_update_wallet($user_login, $user ) {
+    global $user_ID;
+    global $wpdb;
+    $btc_address = get_user_meta($user->ID,"btc_address",true);
+    require_once('easybitcoin.php');
+    $options = get_option( 'bitmarket_settings' );
+    $bitcoinduser = $options['bitmarket_text_field_0'];
+    $bitcoindpassword = $options['bitmarket_text_field_1'];
+    $bitcoindip = $options['bitmarket_text_field_2'];
+    $bitcoindport = $options['bitmarket_text_field_3'];
+    $bitcoin = new Bitcoin($bitcoinduser,$bitcoindpassword,$bitcoindip,$bitcoindport);
+    $user_info = get_userdata($user->ID);
+    $username = $user_info->user_login;
+    $bitcoin->getaccountaddress($username);
+    $bitcoin_address = $bitcoin->response;
+    $bitcoin_address = $bitcoin_address["result"];
+    update_user_meta($user->ID,"btc_address",$bitcoin_address);
+    $bitcoin = new Bitcoin($bitcoinduser,$bitcoindpassword,$bitcoindip,$bitcoindport);
+    $bitcoin->getbalance($user_login);
+    $bitcoin_balance = $bitcoin->response;
+    $bitcoin_balance = $bitcoin_balance["result"];
+    $bitcoin_balance = round($bitcoin_balance, 4);
+    $bitcoin_balance = strval($bitcoin_balance);
+    update_user_meta($user->ID,"btc_available",$bitcoin_balance);
+}
+add_action('wp_login', 'bitmarket_update_wallet', 10, 2);
+
 function bitmarket_register_wallet($user_id) {
     global $user_ID;
     global $wpdb;
